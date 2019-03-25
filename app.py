@@ -39,7 +39,6 @@ def refreshMovies():
     conn.meta.client.meta.events.register('choose-signer.s3.*', disable_signing)
     bucket = conn.Bucket('videovault4800')
 
-
     for item in bucket.objects.filter(Prefix='movies/'):
         if item.key != 'movies/':
             movieName = item.key.replace('movies/', '').replace('.mp4', '')
@@ -48,10 +47,9 @@ def refreshMovies():
             movieData = Movie.query.filter_by(title=movieName).first()
             movieData.url = movieURL
             db.session.commit()
-            return 'Added propor url'
+            return 'Added proper url'
 
     return "End"
-
 
 
 if __name__ == '__main__':
