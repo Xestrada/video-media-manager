@@ -39,17 +39,27 @@ def refreshMovies():
     conn.meta.client.meta.events.register('choose-signer.s3.*', disable_signing)
     bucket = conn.Bucket('videovault4800')
 
-    for item in bucket.objects.filter(Prefix='movies/'):
+    movie_dict = bucket.objects.filter(Prefix='movies/')
+    for item in movie_dict:
         if item.key != 'movies/':
-            movieName = item.key.replace('movies/', '').replace('.mp4', '')
-            movieURL = 'https://s3.amazonaws.com/videovault4800/' + item.key
-            movieURL = movieURL.replace(" ", "+")
-            movieData = Movie.query.filter_by(title=movieName).first()
-            movieData.url = movieURL
+            movie_name = item.key.replace('movies/', '').replace('.mp4', '')
+            movie_url = 'https://s3.amazonaws.com/videovault4800/' + item.key
+            movie_url = movie_url.replace(" ", "+")
+            movie_data = Movie.query.filter_by(title=movie_name).first()
+            movie_data.url = movie_url
             db.session.commit()
             return 'Added proper url'
 
     return "End"
+
+
+@app.route('/tv_shows')
+def refresh_tv_shows():
+    conn = boto3.resource('s3')
+    conn.meta.client.meta.events.register('choose-signer.s3.*', disable_signing)
+    bucket = conn.Bucket('videovault4800')
+
+
 
 
 if __name__ == '__main__':
