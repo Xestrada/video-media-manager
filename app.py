@@ -6,6 +6,7 @@ import boto3.s3
 from botocore.handlers import disable_signing
 import pymysql
 import os
+import re
 
 # Setup App
 app = Flask(__name__)
@@ -41,7 +42,8 @@ def refreshMovies():
 
     movie_dict = bucket.objects.filter(Prefix='movies/')
     for item in movie_dict:
-        # If the movie path contains a movie title
+
+        # Ex. movies/Bird Box.mp4
         if item.key != 'movies/':
             movie_name = item.key.replace('movies/', '').replace('.mp4', '')
             movie_url = 'https://s3.amazonaws.com/videovault4800/' + item.key
@@ -62,17 +64,27 @@ def refresh_tv_shows():
 
     tv_show_dict = bucket.objects.filter(Prefix='shows/')
     for title in tv_show_dict:
-        # If the shows path contains a tv show title
-        if title.key != 'shows/':
+        shows_pattern = re.compile("shows/+?")
+
+        # Ex. shows/game of thrones
+        if shows_pattern.match(title.key) is not None:
             tvs_title = title.key.split("shows/")[1][:-1]
             tvs_season_prefix = 'shows/{}'.format(tvs_title)
             tv_show_season_dict = bucket.objects.filter(Prefix=tvs_season_prefix)
 
             for season in tv_show_season_dict:
-                if season.key != tvs_season_prefix:
-                    # Update Episode Url here
-                    return None
+                season_pattern = re.compile("season [0-9]+$")  # season [any num]$
+                season = season.key.split(tvs_season_prefix)[1][1:-1]
 
+                # Ex. shows/game of thrones/season 1
+                if season_pattern.match(season) is not None:
+                    season_episode_prefix = '{}/{}/'.format(tvs_season_prefix, season)
+                    season_episode_dict = bucket.objects.filter(Prefix=season_episode_prefix)
+
+                    for episode in season_episode_dict:
+                        episode_pattern = re.compile("episode [0-9]+/$")  # episode [any num]$
+                        episode = episode.key.split(season_episode_prefix)[1]
+                        print(episode)
 
 if __name__ == '__main__':
     app.run(port=port)
