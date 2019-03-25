@@ -192,6 +192,7 @@ class TVShowEpisodes(db.Model):
     season_id = db.Column(db.INTEGER, primary_key=True)
     episode = db.Column(db.INTEGER, primary_key=True)
     episode_name = db.Column(db.VARCHAR)
+    url = db.Column(db.VARCHAR)
 
     def __init__(self, episode_name):
         self.episode_name = episode_name
@@ -200,6 +201,7 @@ class TVShowEpisodes(db.Model):
         return {
             'episode': self.episode,
             'episode_name': self.episode_name,
+            'url': self.url,
         }
 
 
