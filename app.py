@@ -41,6 +41,7 @@ def refreshMovies():
 
     movie_dict = bucket.objects.filter(Prefix='movies/')
     for item in movie_dict:
+        # If the movie path contains a movie title
         if item.key != 'movies/':
             movie_name = item.key.replace('movies/', '').replace('.mp4', '')
             movie_url = 'https://s3.amazonaws.com/videovault4800/' + item.key
@@ -59,7 +60,18 @@ def refresh_tv_shows():
     conn.meta.client.meta.events.register('choose-signer.s3.*', disable_signing)
     bucket = conn.Bucket('videovault4800')
 
+    tv_show_dict = bucket.objects.filter(Prefix='shows/')
+    for title in tv_show_dict:
+        # If the shows path contains a tv show title
+        if title.key != 'shows/':
+            tvs_title = title.key.split("shows/")[1][:-1]
+            tvs_season_prefix = 'shows/{}'.format(tvs_title)
+            tv_show_season_dict = bucket.objects.filter(Prefix=tvs_season_prefix)
 
+            for season in tv_show_season_dict:
+                if season.key != tvs_season_prefix:
+                    # Update Episode Url here
+                    return None
 
 
 if __name__ == '__main__':
