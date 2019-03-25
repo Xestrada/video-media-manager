@@ -22,11 +22,12 @@ db = SQLAlchemy(app)
 # Enable Variable Port for Heroku
 port = int(os.environ.get('PORT', 33507))
 
+
 # Import models
 from models import Actor, ActorMovie, ActorsTVShow
 from media_models import Genre
-from media_models import Movie, MovieGenre
-from media_models import TVShows, TVShowGenre
+from media_models import Movie, MovieGenre, MovieInfo
+from media_models import TVShows, TVShowGenre, TVShowSeasons, TVShowEpisodes, TVShowSeasonInfo, TVShowInfo
 
 # Force pymysql to be used as replacement for MySQLdb
 pymysql.install_as_MySQLdb()
@@ -78,6 +79,7 @@ def refresh_tv_shows():
 
                 # Ex. shows/game of thrones/season 1
                 if season_pattern.match(season) is not None:
+                    season_id = season[-1]
                     season_episode_prefix = '{}/{}/'.format(tvs_season_prefix, season)
                     season_episode_dict = bucket.objects.filter(Prefix=season_episode_prefix)
 
@@ -87,15 +89,27 @@ def refresh_tv_shows():
 
                         # Ex. shows/game of thrones/season 1/episode 1
                         if episode_pattern.match(episode) is not None:
+                            episode_id = episode[-1]
                             episode_video_prefix = '{}/{}/{}/'.format(tvs_season_prefix, season, episode)
                             video_dict = bucket.objects.filter(Prefix=episode_video_prefix)
 
                             for video in video_dict:
+
                                 # Ex. shows/game of thrones/season 1/episode 1/Winter Is Coming.mp4
                                 if video.key != episode_video_prefix:
+                                    tv_show_id = TVShows.query.filter_by(title=tvs_title).first().id
+                                    episode_data = TVShowEpisodes.query \
+                                        .filter_by(tv_show_id=tv_show_id) \
+                                        .filter_by(season_id=season_id) \
+                                        .filter_by(episode=episode_id) \
+                                        .first()
 
-                                    # Determine Season Num, Episode Num, Match URL
-                                    return None
+                                    episode_url = 'https://s3.amazonaws.com/videovault4800/' + video.key
+                                    episode_url = episode_url.replace(' ', '+')
+                                    episode_data.url = episode_url
+                                    db.session.commit()
+
+    return 'End'
 
 
 if __name__ == '__main__':
