@@ -82,9 +82,21 @@ def refresh_tv_shows():
                     season_episode_dict = bucket.objects.filter(Prefix=season_episode_prefix)
 
                     for episode in season_episode_dict:
-                        episode_pattern = re.compile("episode [0-9]+/$")  # episode [any num]$
-                        episode = episode.key.split(season_episode_prefix)[1]
-                        print(episode)
+                        episode_pattern = re.compile("episode [0-9]+$")  # episode [any num]$
+                        episode = episode.key.split(season_episode_prefix)[1][:-1]
+
+                        # Ex. shows/game of thrones/season 1/episode 1
+                        if episode_pattern.match(episode) is not None:
+                            episode_video_prefix = '{}/{}/{}/'.format(tvs_season_prefix, season, episode)
+                            video_dict = bucket.objects.filter(Prefix=episode_video_prefix)
+
+                            for video in video_dict:
+                                # Ex. shows/game of thrones/season 1/episode 1/Winter Is Coming.mp4
+                                if video.key != episode_video_prefix:
+
+                                    # Determine Season Num, Episode Num, Match URL
+                                    return None
+
 
 if __name__ == '__main__':
     app.run(port=port)
