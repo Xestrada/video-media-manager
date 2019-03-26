@@ -57,6 +57,7 @@ def refreshMovies():
     return "End"
 
 
+# Update TV Shows based on TV Shows in Amazon S3
 @app.route('/tv_shows')
 def refresh_tv_shows():
     result = list()
@@ -102,6 +103,7 @@ def refresh_tv_shows():
     return jsonify({'result': [r for r in result]})
 
 
+# Adds the URL of a specific TV Show's Season's Episode to the tv_show_episodes Table
 def set_episode_url(tv_show_id: int, season_id: int, episode_id: int, path: str) -> None:
     episode_data = TVShowEpisodes.query \
         .filter_by(tv_show_id=tv_show_id) \
