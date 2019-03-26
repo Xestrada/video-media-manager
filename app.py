@@ -67,30 +67,27 @@ def refresh_tv_shows():
 
     tv_show_dict = bucket.objects.filter(Prefix='shows/')
     for title in tv_show_dict:
-        shows_pattern = re.compile("shows/+?")
 
         # Ex. shows/game of thrones
-        if shows_pattern.match(title.key) is not None:
+        if matches_show_pattern(title.key):
             tvs_title = title.key.split("shows/")[1][:-1]
             tvs_season_prefix = 'shows/{}'.format(tvs_title)
             tv_show_season_dict = bucket.objects.filter(Prefix=tvs_season_prefix)
 
             for season in tv_show_season_dict:
-                season_pattern = re.compile("season [0-9]+$")  # season [any num]$
                 season = season.key.split(tvs_season_prefix)[1][1:-1]
 
                 # Ex. shows/game of thrones/season 1
-                if season_pattern.match(season) is not None:
+                if matches_season_pattern(season):
                     season_id = season[-1]
                     season_episode_prefix = '{}/{}/'.format(tvs_season_prefix, season)
                     season_episode_dict = bucket.objects.filter(Prefix=season_episode_prefix)
 
                     for episode in season_episode_dict:
-                        episode_pattern = re.compile("episode [0-9]+$")  # episode [any num]$
                         episode = episode.key.split(season_episode_prefix)[1][:-1]
 
                         # Ex. shows/game of thrones/season 1/episode 1
-                        if episode_pattern.match(episode) is not None:
+                        if matches_episode_pattern(episode):
                             episode_id = episode[-1]
                             episode_video_prefix = '{}/{}/{}/'.format(tvs_season_prefix, season, episode)
                             video_dict = bucket.objects.filter(Prefix=episode_video_prefix)
@@ -113,6 +110,24 @@ def refresh_tv_shows():
                                     result.append("{} S{} E{} url added.".format(tvs_title, season_id, episode_id))
 
     return jsonify({'result': [r for r in result]})
+
+
+# show/[anything]
+def matches_show_pattern(show: str) -> bool:
+    shows_pattern = re.compile("shows/+?")
+    return shows_pattern.match(show) is not None
+
+
+# season [any num]
+def matches_season_pattern(season: str) -> bool:
+    season_pattern = re.compile("season [0-9]+$")
+    return season_pattern.match(season) is not None
+
+
+# episode [any num]$
+def matches_episode_pattern(episode: str) -> bool:
+    episode_pattern = re.compile("episode [0-9]+$")
+    return episode_pattern.match(episode) is not None
 
 
 if __name__ == '__main__':
