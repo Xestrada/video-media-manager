@@ -63,6 +63,8 @@ def refresh_tv_shows():
     conn.meta.client.meta.events.register('choose-signer.s3.*', disable_signing)
     bucket = conn.Bucket('videovault4800')
 
+    result = list()
+
     tv_show_dict = bucket.objects.filter(Prefix='shows/')
     for title in tv_show_dict:
         shows_pattern = re.compile("shows/+?")
@@ -108,8 +110,9 @@ def refresh_tv_shows():
                                     episode_url = episode_url.replace(' ', '+')
                                     episode_data.url = episode_url
                                     db.session.commit()
+                                    result.append("{} S{} E{} url added.".format(tvs_title, season_id, episode_id))
 
-    return 'End'
+    return jsonify({'result': [r for r in result]})
 
 
 if __name__ == '__main__':
