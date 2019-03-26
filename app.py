@@ -35,8 +35,8 @@ pymysql.install_as_MySQLdb()
 
 # Update Movies based on movies in Amazon S3
 @app.route('/movies')
-def refreshMovies():
-
+def refresh_movies():
+    result = list()
     conn = boto3.resource('s3')
     conn.meta.client.meta.events.register('choose-signer.s3.*', disable_signing)
     bucket = conn.Bucket('videovault4800')
@@ -52,9 +52,9 @@ def refreshMovies():
             movie_data = Movie.query.filter_by(title=movie_name).first()
             movie_data.url = movie_url
             db.session.commit()
-            return 'Added proper url'
+            result.append('Added proper url to {}'.format(movie_name))
 
-    return "End"
+    return jsonify({'result': [r for r in result]})
 
 
 # Update TV Shows based on TV Shows in Amazon S3
