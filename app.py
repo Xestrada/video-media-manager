@@ -1,12 +1,13 @@
-from flask import Flask, request, jsonify, make_response
-from flask_sqlalchemy import SQLAlchemy
-from flask_cors import CORS
-import boto3
-import boto3.s3
-from botocore.handlers import disable_signing
-import pymysql
 import os
 import re
+
+import boto3
+import boto3.s3
+import pymysql
+from botocore.handlers import disable_signing
+from flask import Flask, jsonify
+from flask_cors import CORS
+from flask_sqlalchemy import SQLAlchemy
 
 # Setup App
 app = Flask(__name__)
@@ -22,12 +23,9 @@ db = SQLAlchemy(app)
 # Enable Variable Port for Heroku
 port = int(os.environ.get('PORT', 33507))
 
-
 # Import models
-from models import Actor, ActorMovie, ActorsTVShow
-from media_models import Genre
-from media_models import Movie, MovieGenre, MovieInfo
-from media_models import TVShows, TVShowGenre, TVShowSeasons, TVShowEpisodes, TVShowSeasonInfo, TVShowInfo
+from media_models import Movie
+from media_models import TVShows, TVShowEpisodes
 
 # Force pymysql to be used as replacement for MySQLdb
 pymysql.install_as_MySQLdb()
