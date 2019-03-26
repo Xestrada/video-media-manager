@@ -59,18 +59,17 @@ def refreshMovies():
 
 @app.route('/tv_shows')
 def refresh_tv_shows():
+    result = list()
     conn = boto3.resource('s3')
     conn.meta.client.meta.events.register('choose-signer.s3.*', disable_signing)
     bucket = conn.Bucket('videovault4800')
 
-    result = list()
-
     tv_show_dict = bucket.objects.filter(Prefix='shows/')
-    for title in tv_show_dict:
+    for show in tv_show_dict:
 
         # Ex. shows/game of thrones
-        if matches_show_pattern(title.key):
-            tvs_title = title.key.split("shows/")[1][:-1]
+        if matches_show_pattern(show.key):
+            tvs_title = show.key.split("shows/")[1][:-1]
             tvs_season_prefix = 'shows/{}'.format(tvs_title)
             tv_show_season_dict = bucket.objects.filter(Prefix=tvs_season_prefix)
 
@@ -90,26 +89,30 @@ def refresh_tv_shows():
                         if matches_episode_pattern(episode):
                             episode_id = episode[-1]
                             episode_video_prefix = '{}/{}/{}/'.format(tvs_season_prefix, season, episode)
-                            video_dict = bucket.objects.filter(Prefix=episode_video_prefix)
 
+                            video_dict = bucket.objects.filter(Prefix=episode_video_prefix)
                             for video in video_dict:
 
                                 # Ex. shows/game of thrones/season 1/episode 1/Winter Is Coming.mp4
                                 if video.key != episode_video_prefix:
                                     tv_show_id = TVShows.query.filter_by(title=tvs_title).first().id
-                                    episode_data = TVShowEpisodes.query \
-                                        .filter_by(tv_show_id=tv_show_id) \
-                                        .filter_by(season_id=season_id) \
-                                        .filter_by(episode=episode_id) \
-                                        .first()
-
-                                    episode_url = 'https://s3.amazonaws.com/videovault4800/' + video.key
-                                    episode_url = episode_url.replace(' ', '+')
-                                    episode_data.url = episode_url
-                                    db.session.commit()
+                                    set_episode_url(tv_show_id, season_id, episode_id, video.key)
                                     result.append("{} S{} E{} url added.".format(tvs_title, season_id, episode_id))
 
     return jsonify({'result': [r for r in result]})
+
+
+def set_episode_url(tv_show_id: int, season_id: int, episode_id: int, path: str) -> None:
+    episode_data = TVShowEpisodes.query \
+        .filter_by(tv_show_id=tv_show_id) \
+        .filter_by(season_id=season_id) \
+        .filter_by(episode=episode_id) \
+        .first()
+
+    episode_url = 'https://s3.amazonaws.com/videovault4800/' + path
+    episode_url = episode_url.replace(' ', '+')
+    episode_data.url = episode_url
+    db.session.commit()
 
 
 # show/[anything]
